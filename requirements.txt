@@ -1,0 +1,7 @@
+couchbase==4.2.0
+streamlit==1.32.2
+langchain-community==0.0.29
+langchain==0.1.13
+tiktoken==0.6.0
+pypdf==4.1.0
+langchain-google-genai
