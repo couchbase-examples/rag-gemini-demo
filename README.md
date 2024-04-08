@@ -1,6 +1,6 @@
-## RAG Demo using Couchbase, Streamlit, Langchain, and OpenAI
+## RAG Demo using Couchbase, Streamlit, Langchain, and Gemini Pro
 
-This is a demo app built to chat with your custom PDFs using the vector search capabilities of Couchbase to augment the OpenAI results in a Retrieval-Augmented-Generation (RAG) model.
+This is a demo app built to chat with your custom PDFs using the vector search capabilities of Couchbase to augment the Gemini Pro results in a Retrieval-Augmented-Generation (RAG) model.
 
 ### How does it work?
 
@@ -9,9 +9,9 @@ You can upload your PDFs with custom data & ask questions about the data in the 
 For each question, you will get two answers:
 
 - one using RAG (Couchbase logo)
-- one using pure LLM - OpenAI (🤖).
+- one using pure LLM - Gemini Pro (🤖).
 
-For RAG, we are using Langchain, Couchbase Vector Search & OpenAI. We fetch parts of the PDF relevant to the question using Vector search & add it as the context to the LLM. The LLM is instructed to answer based on the context from the Vector Store.
+For RAG, we are using Langchain, Couchbase Vector Search & Gemini Pro. We fetch parts of the PDF relevant to the question using Vector search & add it as the context to the LLM. The LLM is instructed to answer based on the context from the Vector Store.
 
 ### How to Run
 
@@ -24,7 +24,7 @@ For RAG, we are using Langchain, Couchbase Vector Search & OpenAI. We fetch part
   Copy the `secrets.example.toml` file in `.streamlit` folder and rename it to `secrets.toml` and replace the placeholders with the actual values for your environment
 
   ```
-  OPENAI_API_KEY = "<open_ai_api_key>"
+  GOOGLE_API_KEY = "<google_api_key>"
   DB_CONN_STR = "<connection_string_for_couchbase_cluster>"
   DB_USERNAME = "<username_for_couchbase_cluster>"
   DB_PASSWORD = "<password_for_couchbase_cluster>"
@@ -53,7 +53,7 @@ For RAG, we are using Langchain, Couchbase Vector Search & OpenAI. We fetch part
 
   #### Index Definition
 
-  Here, we are creating the index `pdf_search` on the documents in the `docs` collection within the `shared` scope in the bucket `pdf-docs`. The Vector field is set to `embeddings` with 1536 dimensions and the text field set to `text`. We are also indexing and storing all the fields under `metadata` in the document as a dynamic mapping to account for varying document structures. The similarity metric is set to dot_product. If there is a change in these parameters, please adapt the index accordingly.
+  Here, we are creating the index `pdf_search` on the documents in the `docs` collection within the `shared` scope in the bucket `pdf-docs`. The Vector field is set to `embeddings` with 768 dimensions and the text field set to `text`. We are also indexing and storing all the fields under `metadata` in the document as a dynamic mapping to account for varying document structures. The similarity metric is set to `dot_product`. If there is a change in these parameters, please adapt the index accordingly.
 
   ```
   {
@@ -89,7 +89,7 @@ For RAG, we are using Langchain, Couchbase Vector Search & OpenAI. We fetch part
                             "dynamic": false,
                             "fields": [
                                 {
-                                    "dims": 1536,
+                                    "dims": 768,
                                     "index": true,
                                     "name": "embedding",
                                     "similarity": "dot_product",
