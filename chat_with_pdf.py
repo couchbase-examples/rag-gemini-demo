@@ -121,7 +121,7 @@ if __name__ == "__main__":
 
     # Use Gecko Embeddings
     embedding = GoogleGenerativeAIEmbeddings(
-        model="models/embedding-001",
+        model="models/text-embedding-004",
     )
 
     # Connect to Couchbase Vector Store
@@ -149,8 +149,8 @@ if __name__ == "__main__":
 
     # Use Gemini Pro as the LLM for the RAG
     llm = GoogleGenerativeAI(
-        temperature=0.1,
-        model="models/gemini-pro",
+        temperature=0.3,
+        model="models/gemini-1.5-pro",
     )
 
     # RAG chain
@@ -170,7 +170,7 @@ if __name__ == "__main__":
 
     llm_without_rag = GoogleGenerativeAI(
         temperature=0,
-        model="models/gemini-pro",
+        model="models/gemini-1.5-pro",
     )
 
     chain_without_rag = (
