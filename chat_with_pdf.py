@@ -1,5 +1,5 @@
 import tempfile
-from langchain_community.vectorstores import CouchbaseVectorStore
+from langchain_couchbase import CouchbaseVectorStore
 from langchain_community.document_loaders import PyPDFLoader
 import os
 import streamlit as st
@@ -75,9 +75,6 @@ def connect_to_couchbase(connection_string, db_username, db_password):
 
 
 if __name__ == "__main__":
-    # # Authorization
-    # if "auth" not in st.session_state:
-    #     st.session_state.auth = False
 
     st.set_page_config(
         page_title="Chat with your PDF using Langchain, Couchbase & Gemini Pro",
@@ -87,19 +84,6 @@ if __name__ == "__main__":
         menu_items=None,
     )
 
-    # AUTH = os.getenv("LOGIN_PASSWORD")
-    # check_environment_variable("LOGIN_PASSWORD")
-
-    # # Authentication
-    # user_pwd = st.text_input("Enter password", type="password")
-    # pwd_submit = st.button("Submit")
-
-    # if pwd_submit and user_pwd == AUTH:
-    #     st.session_state.auth = True
-    # elif pwd_submit and user_pwd != AUTH:
-    #     st.error("Incorrect password")
-
-    # if st.session_state.auth:
     # Load environment variables
     DB_CONN_STR = os.getenv("DB_CONN_STR")
     DB_USERNAME = os.getenv("DB_USERNAME")
