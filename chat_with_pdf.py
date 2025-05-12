@@ -1,6 +1,6 @@
 import tempfile
 from langchain_couchbase import CouchbaseSearchVectorStore
-from langchain.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader
 import os
 import streamlit as st
 from langchain_core.prompts import ChatPromptTemplate
