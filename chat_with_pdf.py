@@ -1,5 +1,5 @@
 import tempfile
-from langchain_couchbase import CouchbaseVectorStore
+from langchain_couchbase import CouchbaseSearchVectorStore
 from langchain_community.document_loaders import PyPDFLoader
 import os
 import streamlit as st
@@ -44,7 +44,7 @@ def get_vector_store(
     index_name,
 ):
     """Return the Couchbase vector store"""
-    vector_store = CouchbaseVectorStore(
+    vector_store = CouchbaseSearchVectorStore(
         cluster=_cluster,
         bucket_name=db_bucket,
         scope_name=db_scope,
@@ -134,7 +134,7 @@ if __name__ == "__main__":
     # Use Gemini Pro as the LLM for the RAG
     llm = GoogleGenerativeAI(
         temperature=0.3,
-        model="models/gemini-1.5-pro",
+        model="models/gemini-2.0-flash",
     )
 
     # RAG chain
