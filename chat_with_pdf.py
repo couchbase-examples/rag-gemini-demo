@@ -134,7 +134,7 @@ if __name__ == "__main__":
     # Use Gemini Pro as the LLM for the RAG
     llm = GoogleGenerativeAI(
         temperature=0.3,
-        model="models/gemini-1.5-pro",
+        model="models/gemini-2.0-flash",
     )
 
     # RAG chain
