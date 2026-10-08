@@ -1,3 +1,4 @@
+import math
 import tempfile
 from langchain_couchbase import CouchbaseSearchVectorStore
 from langchain_community.document_loaders import PyPDFLoader
@@ -6,8 +7,41 @@ import streamlit as st
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import GoogleGenerativeAI
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_core.embeddings import Embeddings
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
+
+# Must match the vector field dimensions in the Search index (demoSearchIndex.json)
+EMBEDDING_DIMENSIONS = 768
+
+
+class FixedDimensionEmbeddings(Embeddings):
+    """Request embeddings of a fixed size and L2-normalize them.
+
+    gemini-embedding-001 returns 3072 dimensions by default. Truncated outputs
+    are not normalized, and the index uses dot_product similarity.
+    """
+
+    def __init__(self, embeddings, dimensions):
+        self.embeddings = embeddings
+        self.dimensions = dimensions
+
+    @staticmethod
+    def _normalize(vector):
+        norm = math.sqrt(sum(x * x for x in vector))
+        return [x / norm for x in vector] if norm else list(vector)
+
+    def embed_documents(self, texts):
+        vectors = self.embeddings.embed_documents(
+            texts, output_dimensionality=self.dimensions
+        )
+        return [self._normalize(v) for v in vectors]
+
+    def embed_query(self, text):
+        vector = self.embeddings.embed_query(
+            text, output_dimensionality=self.dimensions
+        )
+        return self._normalize(vector)
 
 
 def check_environment_variable(variable_name):
@@ -104,9 +138,12 @@ if __name__ == "__main__":
     check_environment_variable("DB_COLLECTION")
     check_environment_variable("INDEX_NAME")
 
-    # Use Gecko Embeddings
-    embedding = GoogleGenerativeAIEmbeddings(
-        model="models/text-embedding-004",
+    # Use Gemini Embeddings, reduced to the index's vector dimensions
+    embedding = FixedDimensionEmbeddings(
+        GoogleGenerativeAIEmbeddings(
+            model="models/gemini-embedding-001",
+        ),
+        EMBEDDING_DIMENSIONS,
     )
 
     # Connect to Couchbase Vector Store
@@ -132,10 +169,10 @@ if __name__ == "__main__":
 
     prompt = ChatPromptTemplate.from_template(template)
 
-    # Use Gemini Pro as the LLM for the RAG
+    # Use Gemini Flash as the LLM for the RAG
     llm = GoogleGenerativeAI(
         temperature=0.3,
-        model="models/gemini-2.0-flash",
+        model="models/gemini-2.5-flash",
     )
 
     # RAG chain
@@ -155,7 +192,7 @@ if __name__ == "__main__":
 
     llm_without_rag = GoogleGenerativeAI(
         temperature=0,
-        model="models/gemini-1.5-pro",
+        model="models/gemini-2.5-flash",
     )
 
     chain_without_rag = (

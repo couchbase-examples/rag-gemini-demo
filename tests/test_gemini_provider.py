@@ -32,15 +32,32 @@ def _app_models(class_name):
                 if kw.arg == "model" and isinstance(kw.value, ast.Constant):
                     models.append(kw.value.value)
     assert models, f"no {class_name}(model=...) call found in {APP.name}"
-    return models
+    return list(dict.fromkeys(models))
+
+
+def _app_embedding_dimensions():
+    """Return the EMBEDDING_DIMENSIONS constant from the app."""
+    for node in ast.parse(APP.read_text()).body:
+        if (
+            isinstance(node, ast.Assign)
+            and len(node.targets) == 1
+            and isinstance(node.targets[0], ast.Name)
+            and node.targets[0].id == "EMBEDDING_DIMENSIONS"
+        ):
+            return ast.literal_eval(node.value)
+    raise AssertionError(f"EMBEDDING_DIMENSIONS not found in {APP.name}")
 
 
 @pytest.mark.parametrize("model", _app_models("GoogleGenerativeAIEmbeddings"))
 def test_embeddings(model):
     from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
-    vector = GoogleGenerativeAIEmbeddings(model=model).embed_query("Couchbase")
-    assert len(vector) > 0
+    dimensions = _app_embedding_dimensions()
+    vector = GoogleGenerativeAIEmbeddings(model=model).embed_query(
+        "Couchbase", output_dimensionality=dimensions
+    )
+    # Must match the Search index's vector field (demoSearchIndex.json)
+    assert len(vector) == dimensions
     assert all(isinstance(x, float) and math.isfinite(x) for x in vector)
 
 

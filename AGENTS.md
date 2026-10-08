@@ -14,7 +14,7 @@ python -m playwright install chromium           # add --with-deps on a fresh Lin
 | Tier | What it covers | Secrets | When it runs |
 | --- | --- | --- | --- |
 | 1. Streamlit smoke | Boots `chat_with_pdf.py` headlessly, checks the UI renders, uploads a small PDF, sends a chat message, and fails on any traceback in the page or server log. Couchbase and Gemini are replaced by in-memory fakes (`tests/smoke_app.py`). | None | Every PR and push to `master` (`Streamlit smoke (no secrets)` job). This is the required check. |
-| 2. Gemini provider smoke | Calls the live Gemini API with the exact model names in `chat_with_pdf.py`: `embed_query` must return a non-empty numeric vector and each LLM must return a non-empty response. Couchbase is not used. | `GOOGLE_API_KEY` | `Gemini provider smoke (optional, GOOGLE_API_KEY)` job, on PRs from this repo, pushes to `master`, and manual `workflow_dispatch`. If the secret is not available (fork and Dependabot PRs), the job passes with a "skipped" notice. |
+| 2. Gemini provider smoke | Calls the live Gemini API with the exact model names in `chat_with_pdf.py`: `embed_query` must return a numeric vector of `EMBEDDING_DIMENSIONS` (768, the index's vector size) and each LLM must return a non-empty response. Couchbase is not used. | `GOOGLE_API_KEY` | `Gemini provider smoke (optional, GOOGLE_API_KEY)` job, on PRs from this repo, pushes to `master`, and manual `workflow_dispatch`. If the secret is not available (fork and Dependabot PRs), the job passes with a "skipped" notice. |
 | 3. Live Couchbase RAG validation | Full app against a real cluster and Search vector index. | All app secrets | Manual only (see below). |
 
 Commands:
@@ -49,10 +49,23 @@ run the app against a real cluster and attach evidence to the PR:
 1. **App boot**: `streamlit run chat_with_pdf.py` starts with no errors (paste the console output).
 2. **Couchbase / vector index state**: the cluster is reachable, and the Search
    index (`demoSearchIndex.json`, 768-dim `embedding` field) exists on the
-   configured bucket/scope/collection and is ready.
+   configured bucket/scope/collection and is ready. The collection must only
+   hold documents embedded with the app's current embedding model
+   (`gemini-embedding-001` at 768 dims). Documents indexed with the retired
+   `text-embedding-004` must be deleted and re-uploaded (re-embedded), or
+   retrieval results are meaningless.
 3. **Provider credentials**: `GOOGLE_API_KEY` is set and tier 2 passes (or
    explain why it was skipped).
 4. **Sample input**: upload a small PDF and note its name/size.
 5. **Query and observed response**: ask a question answered by the PDF. Record
    the question, the RAG answer, and the pure-LLM answer.
 6. **Screenshots or traces** of the chat when practical.
+
+## Models
+
+`chat_with_pdf.py` uses `gemini-embedding-001` (requested at
+`EMBEDDING_DIMENSIONS = 768` and L2-normalized, because the index uses
+`dot_product`) and `gemini-2.5-flash` for both LLM answers. If Google retires a
+model, tier 2 fails with a 404. When you change the embedding model, keep the
+dimensions in step with `demoSearchIndex.json` and the README index definition,
+and tell users to re-embed existing documents.

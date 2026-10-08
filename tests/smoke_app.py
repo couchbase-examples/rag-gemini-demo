@@ -40,8 +40,20 @@ class FakeCluster:
         pass
 
 
+class FakeGeminiEmbeddings(DeterministicFakeEmbedding):
+    """Accepts the output_dimensionality argument the app passes to Gemini."""
+
+    def embed_documents(self, texts, output_dimensionality=None, **kwargs):
+        assert output_dimensionality == self.size
+        return super().embed_documents(texts)
+
+    def embed_query(self, text, output_dimensionality=None, **kwargs):
+        assert output_dimensionality == self.size
+        return super().embed_query(text)
+
+
 def fake_embeddings(model, **kwargs):
-    return DeterministicFakeEmbedding(size=768)
+    return FakeGeminiEmbeddings(size=768)
 
 
 def fake_llm(model, **kwargs):
