@@ -1,0 +1,64 @@
+name: Smoke tests
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  streamlit-smoke:
+    name: Streamlit smoke (no secrets)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - name: Install dependencies
+        run: |
+          python -m pip install -r requirements-dev.txt
+          python -m playwright install --with-deps chromium
+      - name: Run Streamlit + Playwright smoke test
+        run: python -m pytest tests/test_streamlit_smoke.py -v
+
+  gemini-provider-smoke:
+    name: Gemini provider smoke (optional, GOOGLE_API_KEY)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+    steps:
+      - name: Check for GOOGLE_API_KEY
+        id: key
+        run: |
+          if [ -n "$GOOGLE_API_KEY" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Gemini provider smoke skipped::GOOGLE_API_KEY is not available to this run (fork or Dependabot PRs do not get repository secrets). Run this workflow manually to check the live Gemini path."
+          fi
+      - if: steps.key.outputs.present == 'true'
+        uses: actions/checkout@v7
+      - if: steps.key.outputs.present == 'true'
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - name: Install dependencies
+        if: steps.key.outputs.present == 'true'
+        run: python -m pip install -r requirements-dev.txt
+      - name: Run live Gemini provider smoke test
+        if: steps.key.outputs.present == 'true'
+        run: python -m pytest tests/test_gemini_provider.py -v -rs

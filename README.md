@@ -133,3 +133,7 @@ For RAG, we are using Langchain, Couchbase Vector Search & Gemini Pro. We fetch 
 - #### Run the application
 
   `streamlit run chat_with_pdf.py`
+
+### Testing
+
+See [AGENTS.md](AGENTS.md) for the smoke tests (a no-secret Streamlit + Playwright check and an optional live Gemini check that uses `GOOGLE_API_KEY`) and the manual live-validation checklist for dependency updates.
