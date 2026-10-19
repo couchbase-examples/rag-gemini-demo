@@ -13,6 +13,13 @@ For each question, you will get two answers:
 
 For RAG, we are using Langchain, Couchbase Vector Search & Gemini Pro. We fetch parts of the PDF relevant to the question using Vector search & add it as the context to the LLM. The LLM is instructed to answer based on the context from the Vector Store.
 
+### Models
+
+- Embeddings: `gemini-embedding-001`, reduced to 768 dimensions (`output_dimensionality=768`) and L2-normalized to match the Search index below.
+- LLM (RAG and pure LLM answers): `gemini-2.5-flash`.
+
+Earlier versions of this demo used `text-embedding-004`, `gemini-2.0-flash` and `gemini-1.5-pro`, which Google has retired. **If your collection already holds documents embedded with `text-embedding-004`, delete them and upload your PDFs again.** Vectors from different embedding models can't be compared, so the old documents would give poor or misleading search results even though the dimensions still match.
+
 ### How to Run
 
 - #### Install dependencies
@@ -133,3 +140,7 @@ For RAG, we are using Langchain, Couchbase Vector Search & Gemini Pro. We fetch 
 - #### Run the application
 
   `streamlit run chat_with_pdf.py`
+
+### Testing
+
+See [AGENTS.md](AGENTS.md) for the smoke tests (a no-secret Streamlit + Playwright check and an optional live Gemini check that uses `GOOGLE_API_KEY`) and the manual live-validation checklist for dependency updates.
