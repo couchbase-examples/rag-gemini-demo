@@ -54,6 +54,12 @@ def _assert_no_errors(page: Page, log_path):
     assert "Traceback" not in log, log
 
 
+def _upload_button(sidebar):
+    return sidebar.get_by_test_id("stFormSubmitButton").get_by_role(
+        "button", name="Upload", exact=True
+    )
+
+
 def test_app_renders(page: Page, streamlit_server):
     _, log_path = streamlit_server
     expect(page.get_by_role("heading", name="Chat with PDF")).to_be_visible()
@@ -61,7 +67,9 @@ def test_app_renders(page: Page, streamlit_server):
     expect(page.get_by_placeholder("Ask a question based on the PDF")).to_be_visible()
     sidebar = page.get_by_test_id("stSidebar")
     expect(sidebar.get_by_text("Upload your PDF")).to_be_visible()
-    expect(sidebar.get_by_role("button", name="Upload")).to_be_visible()
+    # Streamlit 1.67+ also labels the file uploader's own button "Upload",
+    # so scope the locator to the form submit button.
+    expect(_upload_button(sidebar)).to_be_visible()
     expect(sidebar.get_by_text("How does it work?")).to_be_visible()
     _assert_no_errors(page, log_path)
 
@@ -73,7 +81,7 @@ def test_pdf_upload(page: Page, streamlit_server):
         {"name": "smoke.pdf", "mimeType": "application/pdf", "buffer": _make_pdf(PDF_TEXT)}
     )
     expect(sidebar.get_by_text("smoke.pdf")).to_be_visible()
-    sidebar.get_by_role("button", name="Upload").click()
+    _upload_button(sidebar).click()
     expect(page.get_by_text("PDF loaded into vector store in 1 documents")).to_be_visible()
     _assert_no_errors(page, log_path)
 
