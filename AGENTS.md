@@ -14,14 +14,15 @@ python -m playwright install chromium           # add --with-deps on a fresh Lin
 | Tier | What it covers | Secrets | When it runs |
 | --- | --- | --- | --- |
 | 1. Streamlit smoke | Boots `chat_with_pdf.py` headlessly, checks the UI renders, uploads a small PDF, sends a chat message, and fails on any traceback in the page or server log. Couchbase and Gemini are replaced by in-memory fakes (`tests/smoke_app.py`). | None | Every PR and push to `master` (`Streamlit smoke (no secrets)` job). This is the required check. |
-| 2. Gemini provider smoke | Calls the live Gemini API with the exact model names in `chat_with_pdf.py`: `embed_query` must return a numeric vector of `EMBEDDING_DIMENSIONS` (768, the index's vector size) and each LLM must return a non-empty response. Couchbase is not used. | `GOOGLE_API_KEY` | `Gemini provider smoke (optional, GOOGLE_API_KEY)` job, on PRs from this repo, pushes to `master`, and manual `workflow_dispatch`. If the secret is not available (fork and Dependabot PRs), the job passes with a "skipped" notice. |
+| 1a. Embedding unit tests | `FixedDimensionEmbeddings` requests `EMBEDDING_DIMENSIONS` and L2-normalizes, and `EMBEDDING_DIMENSIONS` matches the vector `dims` in `demoSearchIndex.json`. | None | Same job as 1. |
+| 2. Gemini provider smoke | Calls the live Gemini API through the app's own setup in `chat_with_pdf.py`: `create_embeddings().embed_query` must return a unit-length numeric vector of `EMBEDDING_DIMENSIONS` (768, the index's vector size), and `LLM_MODEL` must return a non-empty response. Couchbase is not used. | `GOOGLE_API_KEY` | `Gemini provider smoke (optional, GOOGLE_API_KEY)` job, on PRs from this repo, pushes to `master`, and manual `workflow_dispatch`. If the secret is not available (fork and Dependabot PRs), the job passes with a "skipped" notice. |
 | 3. Live Couchbase RAG validation | Full app against a real cluster and Search vector index. | All app secrets | Manual only (see below). |
 
 Commands:
 
 ```sh
 # Tier 1: no secrets needed
-python -m pytest tests/test_streamlit_smoke.py -v
+python -m pytest tests/test_embeddings.py tests/test_streamlit_smoke.py -v
 
 # Tier 2: skipped unless GOOGLE_API_KEY is set in the environment
 python -m pytest tests/test_gemini_provider.py -v -rs
@@ -63,7 +64,9 @@ run the app against a real cluster and attach evidence to the PR:
 
 ## Models
 
-`chat_with_pdf.py` uses `gemini-embedding-001` (requested at
+Model names live in `EMBEDDING_MODEL` and `LLM_MODEL` at the top of
+`chat_with_pdf.py`, and `create_embeddings()` builds the embedding client. Change
+them there, and the tests pick up the change. `chat_with_pdf.py` uses `gemini-embedding-001` (requested at
 `EMBEDDING_DIMENSIONS = 768` and L2-normalized, because the index uses
 `dot_product`) and `gemini-2.5-flash` for both LLM answers. If Google retires a
 model, tier 2 fails with a 404. When you change the embedding model, keep the

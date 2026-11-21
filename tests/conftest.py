@@ -9,6 +9,8 @@ from pathlib import Path
 import pytest
 
 REPO = Path(__file__).resolve().parent.parent
+# Let tests import chat_with_pdf (its UI code only runs under __main__).
+sys.path.insert(0, str(REPO))
 SECRET_NAMES = (
     "GOOGLE_API_KEY",
     "DB_CONN_STR",

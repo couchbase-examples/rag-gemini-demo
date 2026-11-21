@@ -11,6 +11,10 @@ from langchain_core.embeddings import Embeddings
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
+# Gemini models used by the app. tests/test_gemini_provider.py checks these live.
+EMBEDDING_MODEL = "models/gemini-embedding-001"
+LLM_MODEL = "models/gemini-2.5-flash"
+
 # Must match the vector field dimensions in the Search index (demoSearchIndex.json)
 EMBEDDING_DIMENSIONS = 768
 
@@ -42,6 +46,14 @@ class FixedDimensionEmbeddings(Embeddings):
             text, output_dimensionality=self.dimensions
         )
         return self._normalize(vector)
+
+
+def create_embeddings():
+    """Return the app's Gemini embeddings, sized and normalized for the index."""
+    return FixedDimensionEmbeddings(
+        GoogleGenerativeAIEmbeddings(model=EMBEDDING_MODEL),
+        EMBEDDING_DIMENSIONS,
+    )
 
 
 def check_environment_variable(variable_name):
@@ -139,12 +151,7 @@ if __name__ == "__main__":
     check_environment_variable("INDEX_NAME")
 
     # Use Gemini Embeddings, reduced to the index's vector dimensions
-    embedding = FixedDimensionEmbeddings(
-        GoogleGenerativeAIEmbeddings(
-            model="models/gemini-embedding-001",
-        ),
-        EMBEDDING_DIMENSIONS,
-    )
+    embedding = create_embeddings()
 
     # Connect to Couchbase Vector Store
     cluster = connect_to_couchbase(DB_CONN_STR, DB_USERNAME, DB_PASSWORD)
@@ -172,7 +179,7 @@ if __name__ == "__main__":
     # Use Gemini Flash as the LLM for the RAG
     llm = GoogleGenerativeAI(
         temperature=0.3,
-        model="models/gemini-2.5-flash",
+        model=LLM_MODEL,
     )
 
     # RAG chain
@@ -192,7 +199,7 @@ if __name__ == "__main__":
 
     llm_without_rag = GoogleGenerativeAI(
         temperature=0,
-        model="models/gemini-2.5-flash",
+        model=LLM_MODEL,
     )
 
     chain_without_rag = (
